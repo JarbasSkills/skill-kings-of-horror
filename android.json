@@ -1,0 +1,5 @@
+{
+    "android_icon": "/res/icon/ccc_icon.png",
+    "android_name": "Cult Movie Classics",
+    "android_handler": "skill-ccc.jarbasskills.home"
+}
