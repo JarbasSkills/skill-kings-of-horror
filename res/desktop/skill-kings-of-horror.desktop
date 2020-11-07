@@ -4,8 +4,8 @@ X-KDE-StartupNotify=false
 Version=1.0
 Terminal=false
 Type=Application
-Name=Cult Cinema Classics
-Exec=mycroft-gui-app --hideTextInput --skill=skill-ccc.jarbasskills.home
-Icon=ccc_icon
+Name=Kings of Horror
+Exec=mycroft-gui-app --hideTextInput --skill=skill-kings-of-horror.jarbasskills.home
+Icon=kings_of_horror_icon
 Categories=VoiceApp
 StartupNotify=false

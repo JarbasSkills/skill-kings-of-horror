@@ -27,7 +27,7 @@ this requires latest CPS refactor, not yet merged in core
 ## Credits 
 - JarbasAl
 - [AIIX ](https://github.com/AIIX/) - GUI
-- [Kings of Horror](https://www.youtube.com/user/TheKingsofHorror/)
+- [Kings of Horror](https://kingsofhorror.com/)
 
 ## Category
 **Entertainment**

@@ -1,5 +1,5 @@
 {
-    "android_icon": "/res/icon/ccc_icon.png",
-    "android_name": "Cult Movie Classics",
-    "android_handler": "skill-ccc.jarbasskills.home"
+    "android_icon": "/res/icon/kings_of_horror_icon.png",
+    "android_name": "Kings of Horror",
+    "android_handler": "skill-kings-of-horror.jarbasskills.home"
 }
