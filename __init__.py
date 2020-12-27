@@ -1,6 +1,5 @@
 from ovos_utils.skills.templates.media_collection import MediaCollectionSkill
-from ovos_utils.waiting_for_mycroft.common_play import CommonPlaySkill, \
-    CPSMatchLevel, CPSTrackStatus, CPSMatchType
+from ovos_utils.waiting_for_mycroft.common_play import CPSMatchType, CPSMatchLevel
 from mycroft.skills.core import intent_file_handler
 from mycroft.util.parse import fuzzy_match, match_one
 from pyvod import Collection, Media
