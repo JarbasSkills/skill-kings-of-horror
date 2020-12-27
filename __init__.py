@@ -1,4 +1,4 @@
-from mycroft.skills.common_play_skill import CommonPlaySkill, \
+from ovos_utils.waiting_for_mycroft.common_play import CommonPlaySkill, \
     CPSMatchLevel, CPSTrackStatus, CPSMatchType
 from mycroft.skills.core import intent_file_handler
 from mycroft.util.parse import fuzzy_match, match_one
