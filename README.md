@@ -7,8 +7,8 @@
 Indie horror movies for Mycroft
 
 ![](./gui.png)
-
-## Installation Notes
+![](./gui.gif)
+![](./gui2.gif)
 
 ## Installation Notes
 
@@ -19,6 +19,7 @@ this requires [skill-better-playback-control](https://github.com/JarbasSkills/sk
 * "open horror movies menu"
 * "play ninja zombies movie"
 * "play horror movie"
+* "play indie horror movie"
 
 ## Credits 
 - JarbasAl

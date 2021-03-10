@@ -1,0 +1,24 @@
+{
+  "name": "Kings of Horror Skill",
+  "skillname": "skill-kings-of-horror",
+  "authorname": "JarbasSkills",
+  "foldername": "",
+  "url": "https://github.com/JarbasSkills/skill-kings-of-horror",
+  "branch": "v0.1",
+  "desktopFile": false,
+  "warning": "",
+  "systemDeps": false,
+  "platforms": [
+    "arm",
+    "arm64",
+    "i386",
+    "x86_64",
+    "ia64"
+  ],
+  "examples": [
+    "open horror movies menu",
+    "play ninja zombies movie",
+    "play horror movie",
+    "play indie horror movie"
+  ]
+}
