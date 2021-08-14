@@ -22,7 +22,7 @@ class KingsofHorrorSkill(VideoCollectionSkill):
         self.default_image = join(dirname(__file__), "ui", "logo.png")
         self.skill_icon = join(dirname(__file__), "ui", "logo.png")
         self.default_bg = join(dirname(__file__), "ui", "bg.jpg")
-        self.playback_type = CommonPlayPlaybackType.GUI
+        self.playback_type = CommonPlayPlaybackType.VIDEO
         self.media_type = CommonPlayMediaType.MOVIE
 
     # voice interaction
