@@ -1,0 +1,32 @@
+name: Update Json Database
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - dev
+
+jobs:
+  scrap_and_commit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          ref: dev
+          fetch-depth: 0 # otherwise, there would be errors pushing refs to the destination repository.
+      - name: Setup Python
+        uses: actions/setup-python@v1
+        with:
+          python-version: 3.8
+      - name: Install Tools
+        run: |
+          python -m pip install build wheel
+          sudo pip install youtube_archivist==0.0.3
+          sudo pip install git+https://github.com/felipeucelli/pytube
+      - name: Run webscrap script
+        run: |
+          sudo python scripts/update_jsondb.py
+      - name: Commit to dev
+        uses: stefanzweifel/git-auto-commit-action@v4
+        with:
+          commit_message: Update cached json database
+          branch: dev
