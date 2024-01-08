@@ -1,73 +1,62 @@
+import random
 from os.path import join, dirname
 
-from ovos_plugin_common_play.ocp import MediaType, PlaybackType
-from ovos_utils.log import LOG
-from ovos_utils.parse import fuzzy_match
-from ovos_workshop.skills.common_play import OVOSCommonPlaybackSkill, \
-    ocp_search, ocp_featured_media
-from youtube_archivist import YoutubeMonitor
-import random
+import requests
+from json_database import JsonStorageXDG
+
+from ovos_utils.ocp import MediaType, PlaybackType
+from ovos_workshop.decorators.ocp import ocp_search, ocp_featured_media
+from ovos_workshop.skills.common_play import OVOSCommonPlaybackSkill
 
 
 class KingsofHorrorSkill(OVOSCommonPlaybackSkill):
-    def __init__(self):
-        super().__init__("KingsofHorror")
-        self.supported_media = [MediaType.GENERIC, MediaType.MOVIE]
+    def __init__(self, *args, **kwargs):
+        self.supported_media = [MediaType.MOVIE]
         self.skill_icon = join(dirname(__file__), "ui", "logo.png")
         self.default_bg = join(dirname(__file__), "ui", "bg.jpg")
-
-        blacklisted_kwords = ["trailer", "teaser", "movie scene",
-                              "movie clip", "behind the scenes", "Announcing the Winners!",
-                              "Cult Clips", "Movie Preview", "Low Budget Binge", "Live", "interview", "filmmaker",
-                              "Review", "Fight Scene", "KILLER CREATURES |", "Danny Draven's MASTERS OF TERROR",
-                              "Kings of Horror Live", " | MUSIC VIDEO", "Weekly Update LIVE"]
-        self.archive = YoutubeMonitor("TheKingsofHorror",
-                                      min_duration=30 * 60,
-                                      logger=LOG,
-                                      blacklisted_kwords=blacklisted_kwords)
+        self.archive = JsonStorageXDG("TheKingsofHorror", subfolder="OCP")
+        super().__init__(*args, **kwargs)
 
     def initialize(self):
-        bootstrap = "https://github.com/JarbasSkills/skill-kings-of-horror/raw/dev/bootstrap.json"
-        self.archive.bootstrap_from_url(bootstrap)
-        self.schedule_event(self._sync_db, random.randint(3600, 24 * 3600))
+        self._sync_db()
+        self.load_ocp_keywords()
+
+    def load_ocp_keywords(self):
+        title = []
+        genre = ["horror film", "horror movie", "indie",
+                 "b movie",
+                 "low budget movie",
+                 "zombie movie", "monster movie", "classic horror",
+                 "cheap scary movie",
+                 "halloween movie",
+                 "indie horror",
+                 "scary film"]
+
+        for url, data in self.archive.items():
+            t = data["title"].split("📽️")[0].split("|")[0].split("(")[0].split(" KOH ")[0].split(" Full")[0].split(
+                " FULL ")[0].split("FREE")[0].strip(" -.!🎁")
+            if "exclusive" in t.lower() or "game" in t.lower() \
+                    or "music" in t.lower() or "EP0" in data["title"]:
+                continue
+
+            else:
+                title.append(t)
+
+        self.register_ocp_keyword(MediaType.MOVIE,
+                                  "movie_name", title)
+        self.register_ocp_keyword(MediaType.MOVIE,
+                                  "film_genre", genre)
+        self.register_ocp_keyword(MediaType.MOVIE,
+                                  "movie_streaming_provider",
+                                  ["KingsofHorror", "Kings of Horror", "KOH"])
 
     def _sync_db(self):
-        url = "https://www.youtube.com/user/TheKingsofHorror"
-        self.archive.parse_videos(url)
-        self.schedule_event(self._sync_db, random.randint(3600, 24*3600))
+        bootstrap = "https://github.com/JarbasSkills/skill-kings-of-horror/raw/dev/bootstrap.json"
+        data = requests.get(bootstrap).json()
+        self.archive.merge(data)
+        self.schedule_event(self._sync_db, random.randint(3600, 24 * 3600))
 
-    # matching
-    def match_skill(self, phrase, media_type):
-        score = 0
-        if self.voc_match(phrase, "horror"):
-            score += 20
-            if self.voc_match(phrase, "indie"):
-                score += 10
-        if self.voc_match(phrase, "movie") or media_type == MediaType.MOVIE:
-            score += 10
-        if self.voc_match(phrase, "kings-of-horror"):
-            score += 40
-        return score
-
-    def normalize_title(self, title):
-        title = title.lower().strip()
-        title = self.remove_voc(title, "kings-of-horror")
-        title = self.remove_voc(title, "movie")
-        title = self.remove_voc(title, "video")
-        title = self.remove_voc(title, "horror")
-        title = title.replace("|", "").replace('"', "") \
-            .replace(':', "").replace('”', "").replace('“', "") \
-            .strip()
-        return " ".join([w for w in title.split(" ") if w])
-
-        # common play
-
-    def calc_score(self, phrase, match, base_score=0):
-        score = base_score
-        score += 100 * fuzzy_match(phrase.lower(), match["title"].lower())
-        return min(100, score)
-
-    def get_playlist(self, num_entries=250):
+    def get_playlist(self, num_entries=50):
         pl = self.featured_media()[:num_entries]
         return {
             "match_confidence": 90,
@@ -83,26 +72,37 @@ class KingsofHorrorSkill(OVOSCommonPlaybackSkill):
 
     @ocp_search()
     def search_db(self, phrase, media_type):
-        if self.voc_match(phrase, "kings-of-horror"):
-            yield self.get_playlist()
-        if media_type == MediaType.MOVIE:
-            # only search db if user explicitly requested movies
-            base_score = self.match_skill(phrase, media_type)
-            phrase = self.normalize_title(phrase)
+        base_score = 15 if media_type == MediaType.MOVIE else 0
+        entities = self.ocp_voc_match(phrase)
 
-            for url, video in self.archive.db.items():
+        title = entities.get("movie_name")
+        koh = "movie_streaming_provider" in entities  # skill matched
+
+        base_score += 30 * len(entities)
+
+        if title:
+            candidates = [video for video in self.archive.values()
+                          if title.lower() in video["title"].lower()]
+            for video in candidates:
                 yield {
                     "title": video["title"],
-                    "match_confidence": self.calc_score(phrase, video, base_score),
+                    "author": video["author"],
+                    "match_confidence": min(100, base_score),
                     "media_type": MediaType.MOVIE,
-                    "uri": "youtube//" + url,
+                    "uri": "youtube//" + video["url"],
                     "playback": PlaybackType.VIDEO,
                     "skill_icon": self.skill_icon,
                     "skill_id": self.skill_id,
                     "image": video["thumbnail"],
-                    "bg_image": self.default_bg,
-                    "author": "Kings Of Horror"
+                    "bg_image": self.default_bg
                 }
+
+            if koh:
+                yield self.get_playlist()
+
+        elif koh or len(entities) and media_type == MediaType.MOVIE or \
+                len(entities) >= 2:
+            yield self.get_playlist()
 
     @ocp_featured_media()
     def featured_media(self):
@@ -116,8 +116,12 @@ class KingsofHorrorSkill(OVOSCommonPlaybackSkill):
             "skill_icon": self.skill_icon,
             "bg_image": video["thumbnail"],
             "skill_id": self.skill_id
-        } for video in self.archive.sorted_entries()]
+        } for video in self.archive.values()]
 
 
-def create_skill():
-    return KingsofHorrorSkill()
+if __name__ == "__main__":
+    from ovos_utils.messagebus import FakeBus
+
+    s = KingsofHorrorSkill(bus=FakeBus(), skill_id="t.fake")
+    for r in s.search_db("Mrs. Claus", MediaType.MOVIE):
+        print(r)
